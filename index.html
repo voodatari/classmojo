@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>ClassMojo · Bote de clase</title>
+<meta name="description" content="Autoevaluación diaria del objetivo de grupo y bote de clase.">
+<meta name="theme-color" content="#5B4BD8">
+<link rel="icon" href="img/emoji/bote.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css?v=20260930k">
+<link rel="stylesheet" href="css/app.css?v=20260930k">
+</head>
+<body>
+<div class="fondo"><i></i><i></i><i></i></div>
+<div class="flotantes" id="flotantes" aria-hidden="true"></div>
+
+<div class="escenario">
+
+  <!-- ==================== ENTRAR ==================== -->
+  <section class="vista" id="vLogin">
+    <form class="caja caja-login" id="loginForm" autocomplete="on" novalidate>
+      <div class="login-logo" id="loginLogo"></div>
+      <h1>ClassMojo</h1>
+      <p class="sub">El bote de la clase</p>
+      <label for="lgUsuario">Usuario</label>
+      <input class="campo" id="lgUsuario" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="60">
+      <label for="lgClave">Contraseña</label>
+      <input class="campo" id="lgClave" name="password" type="password" autocomplete="current-password" maxlength="72">
+      <label class="casilla"><input type="checkbox" id="lgMantener" checked> Mantener la sesión abierta en este ordenador</label>
+      <p class="aviso mal oculto" id="lgMal"></p>
+      <button type="submit" class="btn principal grande" id="lgEntrar">Entrar</button>
+      <p class="tenue pie-login">No hay registro: la cuenta la crea el administrador.</p>
+    </form>
+  </section>
+
+  <!-- ==================== PRIMERA CLASE ==================== -->
+  <section class="vista" id="vClaseNueva">
+    <form class="caja caja-login" id="claseForm" novalidate>
+      <div class="login-logo" id="claseLogo"></div>
+      <h2>Vamos a crear tu clase</h2>
+      <p class="sub">Después podrás importar el alumnado desde Séneca en el modo maestro.</p>
+      <label for="cnNombre">Nombre de la clase</label>
+      <input class="campo" id="cnNombre" maxlength="60" placeholder="p. ej. 5º A">
+      <label for="cnCurso">Curso escolar</label>
+      <input class="campo" id="cnCurso" maxlength="20" placeholder="p. ej. 2026-2027">
+      <p class="aviso mal oculto" id="cnMal"></p>
+      <button type="submit" class="btn principal grande" id="cnCrear">Crear la clase</button>
+      <button type="button" class="btn enlace" id="cnSalir">Salir</button>
+    </form>
+  </section>
+
+  <!-- ==================== INICIO (pizarra) ==================== -->
+  <section class="vista pizarra" id="vInicio">
+    <header class="topbar topbar-centro">
+      <div class="herramientas izq">
+        <button class="chip" id="inCerrar" title="Cerrar la sesión de la cuenta">🚪<span class="txt"> Cerrar sesión</span></button>
+      </div>
+      <span></span>
+      <div class="herramientas">
+        <span class="sync oculto" id="inSync" title="Respuestas pendientes de enviar"></span>
+        <button class="chip candado" id="inCandado" title="Modo maestro" aria-label="Modo maestro"></button>
+      </div>
+    </header>
+    <div class="inicio">
+      <div class="inicio-clase">
+        <h1 id="inClase"></h1>
+        <p id="inCurso"></p>
+      </div>
+      <div class="bote-grande" id="inBoteCaja">
+        <div class="bote-ico" id="inBoteIco"></div>
+        <div class="bote-texto">
+          <div class="bote-num" id="inBote">0</div>
+          <div class="bote-et">puntos en el bote</div>
+        </div>
+      </div>
+      <div class="bote-cifras" id="inCifras"></div>
+      <button class="btn-gigante" id="inObjetivo">
+        <span id="inObjIco"></span>
+        <span>Objetivo de hoy</span>
+      </button>
+      <p class="inicio-aviso oculto" id="inAviso"></p>
+    </div>
+  </section>
+
+  <!-- ==================== ELEGIR OBJETIVO (pizarra) ==================== -->
+  <section class="vista pizarra" id="vElegir">
+    <header class="topbar">
+      <button class="chip" id="elVolver">← Inicio</button>
+      <h2 class="titulo-vista">¿Qué objetivo miramos?</h2>
+      <span class="hueco"></span>
+    </header>
+    <div class="tarjetas-obj" id="elLista"></div>
+  </section>
+
+  <!-- ==================== AUTOEVALUACIÓN (pizarra, pantalla completa) ==================== -->
+  <section class="vista pizarra" id="vAuto">
+    <div class="auto">
+      <header class="auto-cab">
+        <span></span>
+        <div class="auto-obj" id="auObj"></div>
+        <button class="chip" id="auSalir" title="Salir (lo contestado se guarda)">✕ Salir</button>
+      </header>
+      <div class="auto-centro" id="auCentro">
+        <div class="auto-avatar" id="auAvatar"></div>
+        <div class="auto-nombre" id="auNombre"></div>
+        <div class="auto-puntos oculto" id="auPuntos"></div>
+      </div>
+      <div class="auto-botones">
+        <button class="gordo si" id="auSi"><span class="gordo-ico" id="auSiIco"></span><span>¡Lo conseguí!</span><kbd>S</kbd></button>
+        <button class="gordo no" id="auNo"><span class="gordo-ico" id="auNoIco"></span><span>Hoy no</span><kbd>N</kbd></button>
+      </div>
+      <footer class="auto-pie">
+        <button class="chip" id="auAtras" title="Deshacer la última (Retroceso)">↶ Atrás</button>
+        <div class="progreso">
+          <div class="barra"><i id="auBarra"></i></div>
+          <span id="auCuenta"></span>
+        </div>
+        <button class="chip" id="auAusente" title="No ha venido (A)">No ha venido <kbd>A</kbd></button>
+      </footer>
+    </div>
+  </section>
+
+  <!-- ==================== RESULTADO (pizarra) ==================== -->
+  <section class="vista pizarra" id="vResultado">
+    <div class="resultado">
+      <div class="res-obj" id="reObj"></div>
+      <div class="res-cifra" id="reTexto"></div>
+      <div class="res-pct" id="rePct"></div>
+      <div class="res-mensaje" id="reMensaje"></div>
+      <div class="bote-cifras tres" id="reCifras"></div>
+      <div class="res-botones">
+        <button class="chip" id="reAtras" title="Volver a la última respuesta">↶ Atrás</button>
+        <button class="btn principal grande" id="reInicio">Volver al inicio</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MODO MAESTRO ==================== -->
+  <section class="vista" id="vMaestro">
+    <header class="topbar maestro-bar">
+      <div class="marca"><b>Modo maestro</b><span id="maClase"></span></div>
+      <nav class="pestanas" id="maPestanas">
+        <button data-p="revision">📋 Revisión</button>
+        <button data-p="puntos">⭐ Puntos</button>
+        <button data-p="premios">🎁 Premios</button>
+        <button data-p="alumnado">🧒 Alumnado</button>
+        <button data-p="objetivos">🎯 Objetivos</button>
+        <button data-p="ajustes">⚙️ Ajustes</button>
+      </nav>
+      <div class="herramientas">
+        <button class="chip" id="maCerrar" title="Cerrar la sesión de la cuenta">🚪<span class="txt"> Cerrar sesión</span></button>
+        <button class="chip on" id="maSalir">🔒<span class="txt"> Volver a la pizarra</span></button>
+      </div>
+    </header>
+    <div class="tarjeta maestro-cuerpo">
+      <div class="panel" id="pRevision"></div>
+      <div class="panel" id="pPuntos"></div>
+      <div class="panel" id="pPremios"></div>
+      <div class="panel" id="pAlumnado"></div>
+      <div class="panel" id="pObjetivos"></div>
+      <div class="panel" id="pAjustes"></div>
+    </div>
+  </section>
+
+</div>
+
+<div class="cargando" id="cargando"><div class="spinner"></div><p id="cargandoTxt">Cargando…</p></div>
+<div class="avisos" id="avisos" aria-live="polite"></div>
+
+<script src="js/vendor/supabase.js?v=20260930k"></script>
+<script src="js/config.js?v=20260930k"></script>
+<script src="js/nube.js?v=20260930k"></script>
+<script src="js/cola.js?v=20260930k"></script>
+<script src="js/datos.js?v=20260930k"></script>
+<script src="js/sonido.js?v=20260930k"></script>
+<script src="js/fx.js?v=20260930k"></script>
+<script src="js/dialogo.js?v=20260930k"></script>
+<script src="js/iconos.js?v=20260930k"></script>
+<script src="js/avatares.js?v=20260930k"></script>
+<script src="js/seneca.js?v=20260930k"></script>
+<script src="js/pizarra.js?v=20260930k"></script>
+<script src="js/encajar.js?v=20260930k"></script>
+<script src="js/ficha.js?v=20260930k"></script>
+<script src="js/revision.js?v=20260930k"></script>
+<script src="js/puntos.js?v=20260930k"></script>
+<script src="js/premios.js?v=20260930k"></script>
+<script src="js/alumnado.js?v=20260930k"></script>
+<script src="js/objetivos.js?v=20260930k"></script>
+<script src="js/usuarios.js?v=20260930k"></script>
+<script src="js/ajustes.js?v=20260930k"></script>
+<script src="js/app.js?v=20260930k"></script>
+</body>
+</html>

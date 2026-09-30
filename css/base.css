@@ -1,0 +1,162 @@
+/* =========================================================
+   ClassMojo · hoja común (basada en la de Juegos de aula)
+   Reglas de rendimiento (pizarra digital, portátil modesto):
+   - solo se animan transform y opacity
+   - ninguna celebración pasa de 1 s
+   - nada bloquea la acción del maestro: el estado cambia ya,
+     la animación es decorado que va por detrás
+   El rojo no se usa en la pizarra: solo en botones de borrar
+   del modo maestro.
+   ========================================================= */
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --panel:#ffffff;
+  --ink:#1B1F3B;
+  --muted:#6F7896;
+  --line:#E3E6F2;
+  --soft:#F3F5FC;
+
+  --violeta:#6E5BE8;
+  --violeta2:#8B7CF6;
+  --turquesa:#2BC4B4;
+  --oro:#F5C518;
+  --verde:#1FA35A;
+  --verde2:#34C774;
+  --azul-no:#6C86B8;       /* «Hoy no»: azul grisáceo, neutro */
+  --azul-no2:#8AA0CC;
+  --gris:#8C93A8;
+  --peligro:#D93E52;       /* solo modo maestro */
+
+  --bgA:#7B61FF; --bgB:#22C7B6; --bgC:#4B3CC4; --bgD:#2A1F7A;
+  --orb1:#8C6BFF; --orb2:#2BD4C0; --orb3:#FFC83D;
+
+  --r-l:14px; --r-m:18px; --r-xl:28px;
+  --sombra:0 22px 55px rgba(12,8,50,.32);
+  --rapido:.16s cubic-bezier(.2,.8,.3,1);
+}
+
+html,body{height:100%}
+body{
+  font-family:"Baloo 2","Trebuchet MS","Segoe UI",system-ui,sans-serif;
+  color:var(--ink);
+  background:var(--bgD);
+  overflow:hidden;
+  -webkit-font-smoothing:antialiased;
+}
+button{font-family:inherit}
+
+/* ---------- fondo (degradado con halos que se mueven despacio) ---------- */
+.fondo{position:fixed;inset:0;z-index:-2;overflow:hidden;
+  background:
+    radial-gradient(70vmax 52vmax at 20% 10%,var(--bgA) 0,transparent 62%),
+    radial-gradient(64vmax 48vmax at 85% 90%,var(--bgB) 0,transparent 58%),
+    linear-gradient(160deg,var(--bgC) 0%,var(--bgD) 100%)}
+.fondo i{position:absolute;border-radius:50%;filter:blur(60px);opacity:.33;
+  will-change:transform;animation:deriva 24s ease-in-out infinite alternate}
+.fondo i:nth-child(1){width:34vmax;height:34vmax;left:10%;top:20%;background:var(--orb1)}
+.fondo i:nth-child(2){width:30vmax;height:30vmax;right:8%;bottom:10%;background:var(--orb2);animation-duration:30s;animation-delay:-6s}
+.fondo i:nth-child(3){width:20vmax;height:20vmax;left:55%;top:8%;background:var(--orb3);opacity:.18;animation-duration:36s;animation-delay:-12s}
+@keyframes deriva{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(4vmax,3vmax,0) scale(1.14)}}
+
+#confeti{position:fixed;inset:0;z-index:70;pointer-events:none}
+
+/* ---------- chips y botones ---------- */
+.chip{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.28);
+  padding:8px 16px;border-radius:999px;font-size:15px;font-weight:700;cursor:pointer;
+  backdrop-filter:blur(8px);transition:transform var(--rapido),background var(--rapido);
+  line-height:1.15;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  text-align:center;white-space:nowrap}
+.chip:hover{background:rgba(255,255,255,.3);transform:translateY(-2px)}
+.chip:active{transform:translateY(0) scale(.96)}
+.chip:disabled{opacity:.35;cursor:default;transform:none}
+.chip.on{background:var(--oro);color:#1B1F3B;border-color:var(--oro);box-shadow:0 6px 18px rgba(245,197,24,.4)}
+kbd{font-family:inherit;font-size:.7em;font-weight:800;border:1.5px solid currentColor;border-radius:6px;
+  padding:0 6px;opacity:.55;line-height:1.3}
+
+.btn{border:0;border-radius:var(--r-l);padding:12px 16px;font-weight:800;font-size:15px;cursor:pointer;
+  background:var(--soft);color:var(--ink);line-height:1.2;
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;text-align:center;
+  transition:transform var(--rapido),background var(--rapido),filter var(--rapido)}
+.btn:hover{background:color-mix(in srgb,var(--soft) 80%,var(--line));transform:translateY(-2px)}
+.btn:active{transform:translateY(0) scale(.98)}
+.btn.principal{background:linear-gradient(135deg,var(--violeta),var(--violeta2));color:#fff;
+  box-shadow:0 10px 24px rgba(110,91,232,.42)}
+.btn.principal:hover{filter:brightness(1.08)}
+.btn.peligro{background:linear-gradient(135deg,#D93E52,#F05B6E);color:#fff;box-shadow:0 10px 24px rgba(217,62,82,.3)}
+.btn.peligro:hover{filter:brightness(1.07)}
+.btn.grande{font-size:19px;padding:15px 26px;border-radius:var(--r-m)}
+.btn.enlace{background:transparent;color:var(--muted);font-weight:700}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+.botones{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.botones.reparto{justify-content:space-between}
+.botones .grupo{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+
+/* ---------- campos ---------- */
+label{font-weight:700;font-size:14px;color:var(--muted);display:block;margin:8px 0 4px}
+.campo{width:100%;padding:12px 14px;border:2px solid var(--line);border-radius:var(--r-l);
+  font:inherit;font-size:17px;font-weight:600;color:var(--ink);background:var(--soft);
+  transition:border-color var(--rapido),background var(--rapido)}
+.campo::placeholder{color:var(--muted);font-weight:500}
+.campo:focus{outline:none;border-color:var(--violeta);background:var(--panel)}
+
+.aviso{border-radius:var(--r-m);padding:11px 14px;font-size:14px;line-height:1.5;font-weight:600;
+  background:var(--soft);border:2px solid var(--line);margin:8px 0}
+.aviso.mal{background:color-mix(in srgb,#D93E52 10%,var(--panel));border-color:#E4677A;color:color-mix(in srgb,#D93E52 75%,var(--ink))}
+.tenue{color:var(--muted);font-size:14px;line-height:1.45}
+
+/* ---------- capa modal ---------- */
+.capa{position:fixed;inset:0;background:rgba(20,14,60,.72);display:none;align-items:center;
+  justify-content:center;z-index:60;backdrop-filter:blur(5px);padding:14px}
+.capa.ver{display:flex;animation:aparece .18s ease-out}
+#capaDialogo{z-index:85}
+#capaPin{z-index:80}
+@keyframes aparece{from{opacity:0}to{opacity:1}}
+.caja{background:var(--panel);border-radius:var(--r-xl);padding:26px 24px;text-align:center;
+  width:min(640px,94vw);max-height:min(94vh,94dvh);overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:var(--sombra);
+  animation:surge .3s cubic-bezier(.2,1.25,.35,1)}
+@keyframes surge{from{transform:scale(.9) translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.caja h2{font-size:clamp(21px,2.6vw,27px);margin-bottom:5px}
+.caja .sub{color:var(--muted);font-size:15px;line-height:1.5;margin-bottom:14px}
+.caja.caja-izq{text-align:left}
+.caja .filas{flex:1 1 auto;min-height:0;overflow:auto;margin:0 -24px;padding:4px 24px}
+.caja .capa-pie{flex:0 0 auto;margin-top:14px}
+.caja.dlg{width:min(480px,94vw);padding:26px 26px 22px;gap:12px}
+.caja.dlg h2{font-size:22px}
+.caja.dlg .sub{margin:0}
+.caja.dlg .aviso{margin:0}
+.caja.caja-ancha{width:min(980px,96vw)}
+
+/* ---------- avisos flotantes ---------- */
+.avisos{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:90;
+  display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.aviso-flota{background:var(--ink);color:#fff;font-weight:700;font-size:15px;padding:10px 20px;
+  border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.3);animation:subeAviso .25s ease-out;
+  transition:opacity .35s,transform .35s;max-width:92vw;text-align:center}
+.aviso-flota.mal{background:#8E2536}
+.aviso-flota.fuera{opacity:0;transform:translateY(10px)}
+@keyframes subeAviso{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+
+/* ---------- utilidades ---------- */
+.oculto{display:none !important}
+.cargando{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;color:#fff;z-index:95;background:rgba(36,26,110,.9);font-size:18px;font-weight:700}
+.spinner{width:42px;height:42px;border-radius:50%;border:4px solid rgba(255,255,255,.25);
+  border-top-color:#fff;animation:giro .7s linear infinite}
+.spinner.mini{width:20px;height:20px;border-width:3px;border-color:var(--line);border-top-color:var(--violeta)}
+@keyframes giro{to{transform:rotate(360deg)}}
+
+.tiembla{animation:tiembla .4s}
+@keyframes tiembla{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
+
+/* iconos Fluent (y su emoji de reserva) */
+.ico{display:inline-block;object-fit:contain;user-select:none;-webkit-user-drag:none}
+.ico-texto{display:inline-flex;align-items:center;justify-content:center;line-height:1}
+
+/* ---------- animaciones reducidas (ajuste de la clase) ----------
+   No se sigue prefers-reduced-motion del sistema: solo manda el
+   ajuste que elige el maestro. */
+.sin-anim *,.sin-anim *::before,.sin-anim *::after{animation:none !important;transition:none !important}
