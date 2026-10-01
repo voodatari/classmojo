@@ -78,11 +78,14 @@ window.Sonido = (function (global) {
      entra poco a poco. Todas siguen hasta que se sale de su pantalla. Cada archivo solo se
      descarga la primera vez que se usa (preload none).
      Si el navegador no deja sonar sin un toque (al recargar la página
-     con la sesión abierta), arranca con el primer clic o tecla. */
+     con la sesión abierta), arranca con el primer clic o tecla.
+     Las pistas van con MusicaBucle (bucle.js): en Chrome se repiten sin
+     la pequeña pausa del <audio loop>. Salvo fondo.mp3: dura 8:40 y
+     decodificada ocuparía mucha memoria; su corte sale una vez cada 8 minutos. */
   var K_MUS = 'classmojo.musica';
   var PISTAS = {
     inicio:  { archivo: 'inicio.mp3',  vol: 0.12 },
-    auto:    { archivo: 'fondo.mp3',   vol: 0.22 },
+    auto:    { archivo: 'fondo.mp3',   vol: 0.22, sinCortes: false },
     maestro: { archivo: 'maestro.mp3', vol: 0.10 },
     exito:   { archivo: 'fin.mp3',     vol: 0.55, entrada: 200, desdeCero: true },
     animo:   { archivo: 'animo.mp3',   vol: 0.30, entrada: 600, desdeCero: true }
@@ -105,9 +108,8 @@ window.Sonido = (function (global) {
   function pista(nombre) {
     var p = PISTAS[nombre];
     if (!p.audio) {
-      p.audio = new Audio(RUTA + p.archivo);
-      p.audio.loop = true;
-      p.audio.preload = 'none';
+      /* liberar: en pausa no guarda la pista decodificada (memoria) */
+      p.audio = new MusicaBucle(RUTA + p.archivo, { sinCortes: p.sinCortes, liberar: true });
       p.audio.volume = 0;
     }
     return p;
