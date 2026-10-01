@@ -131,6 +131,7 @@
     lienzo();
     apagandose = false; fundido = 1;     // confeti nuevo: se cancela el desvanecido
     n = Math.round(n * P.cant);
+    if (document.documentElement.classList.contains('ligero')) n = Math.round(n / 2);   // modo ligero: la mitad
     n = Math.min(n, 620 - particulas.length);
     for (var i = 0; i < n; i++) particulas.push(hacer(i, P));
     if (!corriendo && particulas.length) { corriendo = true; requestAnimationFrame(bucle); }

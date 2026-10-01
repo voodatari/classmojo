@@ -163,3 +163,17 @@ label{font-weight:700;font-size:14px;color:var(--muted);display:block;margin:8px
    No se sigue prefers-reduced-motion del sistema: solo manda el
    ajuste que elige el maestro. */
 .sin-anim *,.sin-anim *::before,.sin-anim *::after{animation:none !important;transition:none !important}
+
+/* ---------- modo ligero (js/rendimiento.js) ----------
+   Fuera lo que se recalcula en cada fotograma: el cristal esmerilado y el
+   desenfoque de los halos (que pasa a ir «pintado» en su degradado). Los
+   fondos translúcidos se oscurecen un poco para que todo se lea igual. */
+html.ligero *,html.ligero *::before,html.ligero *::after{-webkit-backdrop-filter:none !important;backdrop-filter:none !important}
+html.ligero .fondo i{filter:none;will-change:auto}
+html.ligero .fondo i:nth-child(1){background:radial-gradient(closest-side,var(--orb1),transparent)}
+html.ligero .fondo i:nth-child(2){background:radial-gradient(closest-side,var(--orb2),transparent)}
+html.ligero .fondo i:nth-child(3){background:radial-gradient(closest-side,var(--orb3),transparent)}
+html.ligero .flotantes{display:none}
+html.ligero .chip:not(.on){background:rgba(30,20,95,.5)}
+html.ligero .chip:not(.on):hover{background:rgba(30,20,95,.7)}
+html.ligero .capa{background:rgba(20,14,60,.86)}

@@ -97,8 +97,9 @@ window.Pizarra = (function (global) {
       var marca = e ? '<span class="marca-hoy">' + (e.tipo === 'hecho' ? '✓ Hecho hoy' : '▶ A medias') + '</span>' : '';
       return '<button class="tarjeta-obj' + (e && e.tipo === 'hecho' ? ' hecho' : '') + '" data-id="' + o.id + '" style="--c:' + o.color + ';--i:' + i + '">' +
         marca + Iconos.html(o.icono, 'ico-obj') +
-        '<b>' + App.esc(o.titulo) + '</b>' +
-        (o.descripcion ? '<span>' + App.esc(o.descripcion) + '</span>' : '') +
+        /* arriba la descripción corta; debajo el detalle (sin descripción, el detalle arriba) */
+        '<b>' + App.esc(o.descripcion || o.titulo) + '</b>' +
+        (o.descripcion ? '<span class="obj-detalle" data-texto="' + App.esc(o.titulo) + '">' + App.esc(o.titulo) + '</span>' : '') +
       '</button>';
     }).join('');
     ajustarTarjetas();
@@ -115,8 +116,76 @@ window.Pizarra = (function (global) {
       if (lado > mejorLado) { mejorLado = lado; mejor = cols; }
     }
     lista.style.setProperty('--cols', mejor);
+    Array.prototype.forEach.call(lista.querySelectorAll('.obj-detalle'), repartirDetalle);
   }
   global.addEventListener('resize', function () { if (App.vista() === 'elegir') ajustarTarjetas(); });
+  /* la tipografía puede llegar después de pintar: entonces se vuelve a medir */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (App.vista() === 'elegir') ajustarTarjetas(); });
+
+  /* El detalle de una tarjeta nunca es más ancho que la descripción corta
+     de encima: si no cabe, va en varias líneas, cada una igual o más
+     corta que la anterior (de mayor a menor) y lo más equilibradas posible.
+     Si una sola palabra ya es más ancha, la letra del detalle se reduce un poco. */
+  function repartirDetalle(s) {
+    var b = s.parentNode.querySelector('b');
+    var texto = s.getAttribute('data-texto') || '';
+    var palabras = texto.split(/\s+/).filter(Boolean);
+    s.style.fontSize = '';
+    s.style.whiteSpace = 'nowrap';
+    s.textContent = texto;
+    if (!b || !palabras.length) return;
+
+    /* ancho de la línea más larga de la descripción (puede ocupar varias) */
+    var r = document.createRange();
+    r.selectNodeContents(b);
+    var W = 0;
+    Array.prototype.forEach.call(r.getClientRects(), function (x) { W = Math.max(W, x.width); });
+    if (!W) return;
+
+    /* medidor invisible con la misma letra que el detalle */
+    var m = document.createElement('span');
+    m.className = 'obj-detalle';
+    m.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;left:0;top:0;pointer-events:none';
+    s.parentNode.appendChild(m);
+    var cache = {};
+    function ancho(t) {
+      if (cache[t] === undefined) { m.textContent = t; cache[t] = m.getBoundingClientRect().width; }
+      return cache[t];
+    }
+    /* reparte con la primera línea como mucho de L y cada una como mucho
+       tan larga como la anterior; ok si todas caben bajo W y van de mayor a menor */
+    function partir(L) {
+      var lineas = [], tope = L, cur = '';
+      palabras.forEach(function (p) {
+        var cand = cur ? cur + ' ' + p : p;
+        if (!cur || ancho(cand) <= tope + 0.5) cur = cand;
+        else { lineas.push(cur); tope = Math.min(tope, ancho(cur)); cur = p; }
+      });
+      lineas.push(cur);
+      var ok = lineas.every(function (l, i) {
+        return ancho(l) <= W + 0.5 && (i === 0 || ancho(l) <= ancho(lineas[i - 1]) + 0.5);
+      });
+      return { lineas: lineas, ok: ok };
+    }
+
+    var tam = parseFloat(getComputedStyle(s).fontSize), mejor = partir(W);
+    while (!mejor.ok && tam > 11) {          // alguna palabra no cabe: letra un poco más pequeña
+      tam *= 0.92;
+      s.style.fontSize = m.style.fontSize = tam + 'px';
+      cache = {};
+      mejor = partir(W);
+    }
+    if (mejor.lineas.length > 1) {
+      /* el mismo número de líneas, pero lo más equilibradas posible */
+      var n = mejor.lineas.length, lo = 0, hi = W;
+      for (var k = 0; k < 14; k++) {
+        var mid = (lo + hi) / 2, p = partir(mid);
+        if (p.ok && p.lineas.length === n) { hi = mid; mejor = p; } else lo = mid;
+      }
+    }
+    m.remove();
+    s.innerHTML = mejor.lineas.map(App.esc).join('<br>');
+  }
 
   function alElegir(id) {
     Sonido.click();
@@ -174,6 +243,7 @@ window.Pizarra = (function (global) {
     $('auAvatar').innerHTML = Avatares.html(a.avatar, 'avatar-auto');
     $('auNombre').textContent = a.nombre_visible;
     pintarPuntosAlumno(a);
+    pintarFila();
     $('auCuenta').textContent = (A.i + 1) + ' de ' + A.orden.length;
     $('auBarra').style.width = (A.historial.length / A.orden.length * 100) + '%';
     ['auSi', 'auNo', 'auAusente'].forEach(function (id) { $(id).classList.remove('pulsado'); $(id).disabled = false; });
@@ -205,12 +275,54 @@ window.Pizarra = (function (global) {
     el.classList.remove('oculto');
   }
 
+  /* Lista de la fila (si está activada en Ajustes): todos en el orden de
+     la clase, el de turno marcado y los que ya han pasado atenuados.
+     Nunca dice qué contestó cada uno: el «sí», el «no» y el «no ha
+     venido» se ven igual. La lista se monta una vez por votación y en
+     cada cambio solo se desliza la banda blanca hasta el de turno. Si no
+     caben, se desplaza para que el de turno quede a la vista.
+     turnoEn: a quién marcar (por defecto, el de turno). Al responder se
+     llama ya con el siguiente, para que la banda baje en cuanto se pulsa. */
+  function pintarFila(turnoEn) {
+    var actual = turnoEn === undefined ? A.i : turnoEn;
+    var el = $('auFila');
+    if (!Datos.verFila()) { el.classList.add('oculto'); el.innerHTML = ''; el.removeAttribute('data-sesion'); return; }
+    var nueva = el.getAttribute('data-sesion') !== A.sesion.id || el.querySelectorAll('li').length !== A.orden.length;
+    el.classList.remove('oculto');
+    if (nueva) {
+      el.setAttribute('data-sesion', A.sesion.id);
+      el.innerHTML = '<span class="fila-marca quieta" aria-hidden="true"></span>' + A.orden.map(function (a, i) {
+        return '<li><span class="fila-n">' + (i + 1) + '</span><span class="fila-nombre">' + App.esc(a.nombre_visible) + '</span></li>';
+      }).join('');
+      /* letra según cuántos son y el alto que hay */
+      var alto = el.clientHeight || 400;
+      el.style.setProperty('--fila-alto', Math.max(18, Math.min(44, Math.floor((alto - 16) / A.orden.length) - 2)) + 'px');
+    }
+    var filas = el.querySelectorAll('li');
+    Array.prototype.forEach.call(filas, function (li, i) {
+      li.classList.toggle('turno', i === actual);
+      li.classList.toggle('hecho', i !== actual && !!A.sesion.respuestas[A.orden[i].id]);
+    });
+    var turno = filas[actual], marca = el.querySelector('.fila-marca');
+    if (!turno) { marca.style.opacity = '0'; return; }
+    marca.style.opacity = '';
+    /* al montar la lista (o con animaciones reducidas) la banda aparece ya en su sitio */
+    marca.classList.toggle('quieta', nueva || !App.animar());
+    marca.style.height = turno.offsetHeight + 'px';
+    marca.style.transform = 'translateY(' + turno.offsetTop + 'px)';
+    if (nueva) requestAnimationFrame(function () { marca.classList.remove('quieta'); });
+    if (el.scrollHeight > el.clientHeight) {
+      el.scrollTop = turno.offsetTop - el.clientHeight / 2 + turno.offsetHeight / 2;
+    }
+  }
+
   function responder(resp) {
     if (!A || A.timer || A.i >= A.orden.length || App.vista() !== 'auto') return;
     var a = A.orden[A.i];
     Datos.responder(A.sesion.id, a.id, resp);
     A.sesion = Datos.sesionLocal(A.sesion.id);
     A.historial.push(a.id);
+    pintarFila(siguienteSinResponder(A.i + 1));   // la banda baja ya, sin esperar al siguiente
     $('auBarra').style.width = (A.historial.length / A.orden.length * 100) + '%';
     $('auAtras').disabled = false;
     var boton = $(resp === 'si' ? 'auSi' : resp === 'no' ? 'auNo' : 'auAusente');

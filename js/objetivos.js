@@ -31,7 +31,7 @@ window.Objetivos = (function () {
           '<button class="mini" data-acc="bajar" title="Bajar"' + (i === l.length - 1 ? ' disabled' : '') + '>▼</button>' +
         '</span>' +
         Iconos.html(o.icono, 'ico-fila') +
-        '<div class="ob-texto"><b>' + App.esc(o.titulo) + '</b><small>' + App.esc(o.descripcion || '') + '</small></div>' +
+        '<div class="ob-texto"><b>' + App.esc(o.descripcion || o.titulo) + '</b><small>' + (o.descripcion ? App.esc(o.titulo) : '') + '</small></div>' +
         '<span class="etq">' + o.umbral_pct + ' % · +' + o.puntos_grupo + '</span>' +
         '<label class="interruptor" title="Activo"><input type="checkbox" data-acc="activo"' + (o.activo ? ' checked' : '') + '><i></i><span>Activo</span></label>' +
         '<button class="mini" data-acc="editar" title="Editar">✏️</button>' +
@@ -83,10 +83,10 @@ window.Objetivos = (function () {
     capa.innerHTML = '<form class="caja caja-ancha caja-izq" id="edForm" novalidate>' +
       '<h2>' + (o ? 'Editar objetivo' : 'Nuevo objetivo') + '</h2>' +
       '<div class="filas">' +
-        '<label for="edTitulo">Título</label>' +
-        '<input class="campo" id="edTitulo" maxlength="90" value="' + App.esc(v.titulo) + '" placeholder="p. ej. Aula recogida antes de la sirena">' +
         '<label for="edDesc">Descripción corta</label>' +
-        '<input class="campo" id="edDesc" maxlength="200" value="' + App.esc(v.descripcion) + '">' +
+        '<input class="campo" id="edDesc" maxlength="200" value="' + App.esc(v.descripcion) + '" placeholder="p. ej. Aula recogida">' +
+        '<label for="edTitulo">Detalle</label>' +
+        '<input class="campo" id="edTitulo" maxlength="90" value="' + App.esc(v.titulo) + '" placeholder="p. ej. Aula recogida antes de la sirena">' +
         '<div class="dos-col">' +
           '<div><label for="edUmbral">Umbral: % de «sí» entre los presentes</label>' +
             '<input class="campo" id="edUmbral" type="number" min="1" max="100" value="' + v.umbral_pct + '"></div>' +
@@ -128,7 +128,7 @@ window.Objetivos = (function () {
         umbral_pct: Math.round(+$('edUmbral').value),
         puntos_grupo: Math.round(+$('edPuntos').value)
       };
-      var err = !campos.titulo ? 'Escribe un título.'
+      var err = !campos.titulo ? 'Escribe el detalle.'
         : !(campos.umbral_pct >= 1 && campos.umbral_pct <= 100) ? 'El umbral va de 1 a 100.'
         : !(campos.puntos_grupo >= 0 && campos.puntos_grupo <= 100) ? 'Los puntos van de 0 a 100.' : '';
       if (err) { $('edMal').textContent = err; $('edMal').classList.remove('oculto'); return; }
@@ -144,7 +144,7 @@ window.Objetivos = (function () {
         $('edMal').classList.remove('oculto');
       });
     };
-    setTimeout(function () { $('edTitulo').focus(); }, 60);
+    setTimeout(function () { $('edDesc').focus(); }, 60);
   }
 
   return { abrir: abrir };

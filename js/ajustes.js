@@ -58,6 +58,13 @@ window.Ajustes = (function (global) {
           '<span>Música de fondo <small>Inicio, autoevaluación y modo maestro. Solo en este ordenador.</small></span></label>' +
         '<label class="interruptor grande"><input type="checkbox" id="ajAnim"' + (c.animaciones_reducidas ? ' checked' : '') + '><i></i>' +
           '<span>Animaciones reducidas <small>Sin confeti ni movimientos. Para toda la clase.</small></span></label>' +
+        '<label class="interruptor grande"><input type="checkbox" id="ajLigero"' + (Rendimiento.activo() ? ' checked' : '') + '><i></i>' +
+          '<span>Modo ligero <small>Quita los desenfoques y los efectos de fondo para que vaya fluido en equipos modestos. ' +
+          '<span id="ajLigeroNota">' + App.esc(Rendimiento.texto()) + '</span>' +
+          (Rendimiento.automatico() ? '' : ' <button type="button" class="enlace-mini" id="ajLigeroAuto">Volver a automático</button>') +
+          '</small></span></label>' +
+        '<label class="interruptor grande"><input type="checkbox" id="ajFila"' + (Datos.verFila() ? ' checked' : '') + '><i></i>' +
+          '<span>Lista de la fila al votar <small>Los nombres en orden, con el de turno marcado, para que sepan cómo colocarse. Solo en este ordenador.</small></span></label>' +
         '<label class="interruptor grande"><input type="checkbox" id="ajEscala"' + (Escala.activar() ? ' checked' : '') + '><i></i>' +
           '<span>Escala fija <small id="ajEscalaNota">' + Escala.texto() + '</small></span></label>' +
       '</section>' +
@@ -122,6 +129,12 @@ window.Ajustes = (function (global) {
       });
     }
     $('ajMusica').onchange = function () { Sonido.musicaActivar(this.checked); };
+    $('ajLigero').onchange = function () { Rendimiento.activo(this.checked); Sonido.click(); abrir(); };
+    if ($('ajLigeroAuto')) $('ajLigeroAuto').onclick = function (e) {
+      e.preventDefault(); e.stopPropagation();
+      Rendimiento.volverAutomatico(); Sonido.click(); abrir();
+    };
+    $('ajFila').onchange = function () { Datos.verFila(this.checked); Sonido.click(); };
     $('ajEscala').onchange = function () { Escala.activar(this.checked); Sonido.click(); };
     $('ajSonido').onchange = function () { Sonido.activar(this.checked); Sonido.click(); };
     if ($('ajUsuarios')) $('ajUsuarios').onclick = function () { Sonido.click(); Usuarios.abrir(); };

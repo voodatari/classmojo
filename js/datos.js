@@ -599,6 +599,16 @@ window.Datos = (function (global) {
     return v;
   }
 
+  /* Lista de la fila al votar (los nombres en orden, con el de turno
+     marcado). Apagada de fábrica; se guarda en este ordenador y para cada clase.
+     verFila() → true/false; verFila(true) → la enciende. */
+  function verFila(v) {
+    var k = 'classmojo.verfila.' + (st.clase && st.clase.id);
+    if (v === undefined) return leerLS(k, false) === true;
+    guardarLS(k, !!v);
+    return !!v;
+  }
+
   /* ---------------- bote ---------------- */
   function kBote() { return 'classmojo.bote.' + (st.clase && st.clase.id); }
 
@@ -674,7 +684,7 @@ window.Datos = (function (global) {
     conductasActivas: conductasActivas, darPuntos: darPuntos, borrarPunto: borrarPunto,
     borrarPuntos: borrarPuntos, reiniciarPuntos: reiniciarPuntos, borrarConducta: borrarConducta,
     guardarEn: guardarEn, borrarDe: borrarDe, canjear: canjear, deshacerCanje: deshacerCanje,
-    periodos: periodos, totales: totales, verPuntos: verPuntos, refrescarPuntos: refrescarPuntos,
+    periodos: periodos, totales: totales, verPuntos: verPuntos, verFila: verFila, refrescarPuntos: refrescarPuntos,
     actualizarBote: actualizarBote
   };
 

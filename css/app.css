@@ -104,6 +104,9 @@ html.escala-fija .avisos{
 .btn-gigante:hover{transform:translateY(-3px) scale(1.02);filter:brightness(1.05)}
 .btn-gigante:active{transform:scale(.97)}
 .ico-boton{width:1.35em;height:1.35em;font-size:1.1em}
+/* el icono (una imagen) iba en línea con el texto, sobre su línea base: quedaba alto */
+#inObjIco{display:flex;align-items:center}
+#inObjIco .ico{display:block}
 .inicio-aviso{background:rgba(255,255,255,.92);color:var(--ink);font-weight:700;font-size:18px;border-radius:18px;padding:10px 20px;text-align:center}
 
 /* ---------- elegir objetivo ---------- */
@@ -139,6 +142,34 @@ html.escala-fija .avisos{
 .auto-obj b{font-size:clamp(22px,calc(3.6 * var(--vh)),42px);line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ico-auto{width:clamp(48px,calc(8 * var(--vh)),86px);height:clamp(48px,calc(8 * var(--vh)),86px);font-size:clamp(40px,calc(6.5 * var(--vh)),72px);flex:0 0 auto}
 .auto-puntos.uno{padding-right:28px}
+/* centro de la votación: el alumno y, a la derecha, la lista de la fila (pizarra.js) */
+.auto-medio{flex:1 1 auto;min-height:0;position:relative;display:flex}
+.auto-medio > .auto-centro{width:100%}
+.auto-fila{position:absolute;top:0;right:0;bottom:0;width:clamp(220px,calc(16 * var(--vw)),320px);margin:0;padding:8px;
+  list-style:none;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:2px;
+  background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);border-radius:22px;backdrop-filter:blur(6px);scroll-behavior:smooth}
+.auto-fila::-webkit-scrollbar{display:none}
+.auto-fila li{position:relative;z-index:1;flex:0 0 var(--fila-alto,32px);min-height:var(--fila-alto,32px);display:flex;align-items:center;gap:8px;padding:0 10px;
+  border-radius:999px;color:#fff;font-weight:700;font-size:clamp(13px,calc(var(--fila-alto,32px) * .64),24px);line-height:1.1;
+  transition:background .2s,color .2s,opacity .2s}
+.auto-fila .fila-n{flex:0 0 1.6em;text-align:right;opacity:.7;font-variant-numeric:tabular-nums}
+.auto-fila .fila-nombre{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auto-fila li.hecho{opacity:.4}
+.auto-fila li.turno{color:var(--violeta)}
+.auto-fila li.turno .fila-n{opacity:1}
+/* la banda blanca del de turno es una pieza aparte que se desliza de un nombre al siguiente */
+.fila-marca{position:absolute;top:0;left:8px;right:8px;z-index:0;background:#fff;border-radius:999px;
+  box-shadow:0 4px 14px rgba(0,0,0,.2);pointer-events:none;
+  transition:transform .38s cubic-bezier(.3,.9,.3,1),height .38s cubic-bezier(.3,.9,.3,1)}
+.fila-marca.quieta{transition:none}
+/* «Volver a automático» del modo ligero, dentro del texto de Ajustes */
+.enlace-mini{border:0;background:none;padding:0;font:inherit;font-weight:800;color:var(--violeta);text-decoration:underline;cursor:pointer}
+/* modo ligero (js/rendimiento.js): sin sombras difusas en los dibujos grandes
+   y fondos un poco más opacos donde había cristal esmerilado */
+html.ligero .ico-bote,html.ligero .ico-obj,html.ligero .avatar-auto,html.ligero .gordo-ico .ico{filter:none}
+html.ligero .bote-cifras:not(.tres) .cifra,html.ligero .auto-fila,html.ligero .auto-puntos{background:rgba(30,20,95,.38)}
+/* sin sitio a los lados del alumno, la lista no se enseña */
+@container pantalla (max-width:1100px){.auto-fila{display:none}}
 .auto-centro{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
 .auto-avatar{height:min(calc(38 * var(--vh)),calc(40 * var(--vw)));aspect-ratio:1;display:flex}
 .avatar{display:inline-block;flex:0 0 auto}
