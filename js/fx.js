@@ -11,7 +11,7 @@
   var apagandose = false, fundido = 1;   // desvanecido rápido al cerrar el marcador
 
   /* ---------- confeti de los marcadores: se puede apagar ---------- */
-  var K_CONF = 'trivialaula.confeti';
+  var K_CONF = 'classmojo.confeti';
   var enMarcadores = true;
   try {
     var g = localStorage.getItem(K_CONF);
