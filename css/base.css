@@ -12,6 +12,9 @@
 *{margin:0;padding:0;box-sizing:border-box}
 
 :root{
+  /* vh/vw que se corrigen con la escala fija (escala.js): dentro de un bloque con zoom
+     valen lo mismo que sin él */
+  --vh:1vh;--vw:1vw;--dvh:1dvh;
   --panel:#ffffff;
   --ink:#1B1F3B;
   --muted:#6F7896;
@@ -115,27 +118,27 @@ label{font-weight:700;font-size:14px;color:var(--muted);display:block;margin:8px
 #capaPin{z-index:80}
 @keyframes aparece{from{opacity:0}to{opacity:1}}
 .caja{background:var(--panel);border-radius:var(--r-xl);padding:26px 24px;text-align:center;
-  width:min(640px,94vw);max-height:min(94vh,94dvh);overflow:hidden;
+  width:min(640px,calc(94 * var(--vw)));max-height:min(calc(94 * var(--vh)),calc(94 * var(--dvh)));overflow:hidden;
   display:flex;flex-direction:column;box-shadow:var(--sombra);
   animation:surge .3s cubic-bezier(.2,1.25,.35,1)}
 @keyframes surge{from{transform:scale(.9) translateY(10px);opacity:0}to{transform:none;opacity:1}}
-.caja h2{font-size:clamp(21px,2.6vw,27px);margin-bottom:5px}
+.caja h2{font-size:clamp(21px,calc(2.6 * var(--vw)),27px);margin-bottom:5px}
 .caja .sub{color:var(--muted);font-size:15px;line-height:1.5;margin-bottom:14px}
 .caja.caja-izq{text-align:left}
 .caja .filas{flex:1 1 auto;min-height:0;overflow:auto;margin:0 -24px;padding:4px 24px}
 .caja .capa-pie{flex:0 0 auto;margin-top:14px}
-.caja.dlg{width:min(480px,94vw);padding:26px 26px 22px;gap:12px}
+.caja.dlg{width:min(480px,calc(94 * var(--vw)));padding:26px 26px 22px;gap:12px}
 .caja.dlg h2{font-size:22px}
 .caja.dlg .sub{margin:0}
 .caja.dlg .aviso{margin:0}
-.caja.caja-ancha{width:min(980px,96vw)}
+.caja.caja-ancha{width:min(980px,calc(96 * var(--vw)))}
 
 /* ---------- avisos flotantes ---------- */
 .avisos{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:90;
   display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
 .aviso-flota{background:var(--ink);color:#fff;font-weight:700;font-size:15px;padding:10px 20px;
   border-radius:999px;box-shadow:0 12px 30px rgba(0,0,0,.3);animation:subeAviso .25s ease-out;
-  transition:opacity .35s,transform .35s;max-width:92vw;text-align:center}
+  transition:opacity .35s,transform .35s;max-width:calc(92 * var(--vw));text-align:center}
 .aviso-flota.mal{background:#8E2536}
 .aviso-flota.fuera{opacity:0;transform:translateY(10px)}
 @keyframes subeAviso{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}

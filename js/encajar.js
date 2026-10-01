@@ -77,7 +77,10 @@ window.Encajar = (function (global) {
     var cols = Math.max(1, Math.min(max, Math.floor((W + hueco) / (op.ancho + hueco)), n));
     var maxCols = Math.max(cols, Math.min(max + 1, Math.floor((W + hueco) / ((op.anchoMin || op.ancho) + hueco)), n));
     var panel = el.closest('.panel');
-    var H = panel ? panel.getBoundingClientRect().bottom - el.getBoundingClientRect().top - 24 : Infinity;
+    /* getBoundingClientRect mide en píxeles de pantalla y offsetHeight en los
+       de dentro del zoom de la escala fija: se pasa todo a los de dentro */
+    var z = global.Escala ? Escala.factor() : 1;
+    var H = panel ? (panel.getBoundingClientRect().bottom - el.getBoundingClientRect().top) / z - 24 : Infinity;
     /* se prueba de verdad cada opción y se mide: con columnas más
        estrechas los textos pasan a dos líneas y las filas crecen */
     function poner(c) {

@@ -58,6 +58,8 @@ window.Ajustes = (function (global) {
           '<span>Música de fondo <small>Inicio, autoevaluación y modo maestro. Solo en este ordenador.</small></span></label>' +
         '<label class="interruptor grande"><input type="checkbox" id="ajAnim"' + (c.animaciones_reducidas ? ' checked' : '') + '><i></i>' +
           '<span>Animaciones reducidas <small>Sin confeti ni movimientos. Para toda la clase.</small></span></label>' +
+        '<label class="interruptor grande"><input type="checkbox" id="ajEscala"' + (Escala.activar() ? ' checked' : '') + '><i></i>' +
+          '<span>Escala fija <small id="ajEscalaNota">' + Escala.texto() + '</small></span></label>' +
       '</section>' +
 
       '<section class="bloque"><h3>👤 Cuenta</h3>' +
@@ -120,6 +122,7 @@ window.Ajustes = (function (global) {
       });
     }
     $('ajMusica').onchange = function () { Sonido.musicaActivar(this.checked); };
+    $('ajEscala').onchange = function () { Escala.activar(this.checked); Sonido.click(); };
     $('ajSonido').onchange = function () { Sonido.activar(this.checked); Sonido.click(); };
     if ($('ajUsuarios')) $('ajUsuarios').onclick = function () { Sonido.click(); Usuarios.abrir(); };
     $('ajEnviar').onclick = function () { Cola.vaciar().then(pintarCola); };

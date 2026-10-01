@@ -444,6 +444,54 @@ window.Datos = (function (global) {
 
   function borrarPunto(id) { return borrarDe('puntos', id); }
 
+  /* Borra varios apuntes de una vez */
+  function borrarPuntos(ids) {
+    if (!ids.length) return Promise.resolve();
+    return db().from('puntos').delete().in('id', ids).then(lanzar).then(function () {
+      var fuera = {};
+      ids.forEach(function (id) { fuera[id] = true; });
+      st.puntos = st.puntos.filter(function (x) { return !fuera[x.id]; });
+      guardarCache();
+    });
+  }
+
+  /* Deja a cero los puntos de un alumno (o de toda la clase si alumnoId es
+     null): borra sus apuntes y sus canjes individuales, para que el saldo
+     también quede a cero y no en negativo. Los canjes colectivos (los paga
+     el bote) no se tocan. Si falla a medias, repetirlo termina el trabajo. */
+  function reiniciarPuntos(alumnoId) {
+    var id = st.clase.id;
+    var qPuntos = db().from('puntos').delete().eq('clase_id', id);
+    var qCanjes = db().from('canjes').delete().eq('clase_id', id);
+    if (alumnoId) { qPuntos = qPuntos.eq('alumno_id', alumnoId); qCanjes = qCanjes.eq('alumno_id', alumnoId); }
+    else qCanjes = qCanjes.not('alumno_id', 'is', null);
+    return qPuntos.then(lanzar).then(function () {
+      st.puntos = st.puntos.filter(function (x) { return alumnoId && x.alumno_id !== alumnoId; });
+      guardarCache();
+      return qCanjes;
+    }).then(lanzar).then(function () {
+      st.canjes = st.canjes.filter(function (c) { return alumnoId ? c.alumno_id !== alumnoId : !c.alumno_id; });
+      guardarCache();
+    });
+  }
+
+  /* Borra una conducta. Antes copia su nombre en la nota de los apuntes que
+     la usaban: al borrarla, la base de datos les quita la conducta y, sin
+     la nota, saldrían como «Otro motivo» en el historial. */
+  function borrarConducta(c) {
+    var nombre = c.nombre.slice(0, 120);
+    return db().from('puntos').update({ nota: nombre }).eq('conducta_id', c.id).eq('nota', '').then(lanzar)
+      .then(function () { return borrarDe('conductas', c.id); })
+      .then(function () {
+        st.puntos.forEach(function (x) {
+          if (x.conducta_id !== c.id) return;
+          x.conducta_id = null;
+          if (!x.nota) x.nota = nombre;
+        });
+        guardarCache();
+      });
+  }
+
   /* guarda (o crea, si id es null) en conductas o recompensas */
   function guardarEn(tabla, id, campos) {
     var sel = tabla === 'conductas' ? CONDUCTA_CAMPOS : RECOMPENSA_CAMPOS;
@@ -624,6 +672,7 @@ window.Datos = (function (global) {
     cerrarSesion: cerrarSesion, anularSesion: anularSesion, sesionLocal: sesionLocal,
     sesionesDelDia: sesionesDelDia, recuento: recuento, borrarSesion: borrarSesion,
     conductasActivas: conductasActivas, darPuntos: darPuntos, borrarPunto: borrarPunto,
+    borrarPuntos: borrarPuntos, reiniciarPuntos: reiniciarPuntos, borrarConducta: borrarConducta,
     guardarEn: guardarEn, borrarDe: borrarDe, canjear: canjear, deshacerCanje: deshacerCanje,
     periodos: periodos, totales: totales, verPuntos: verPuntos, refrescarPuntos: refrescarPuntos,
     actualizarBote: actualizarBote

@@ -271,8 +271,11 @@ window.Puntos = (function () {
   /* ======================= HISTORIAL =======================
      Como «Dar puntos»: a la izquierda el alumnado con su resumen; a la
      derecha, lo último de toda la clase o, al tocar un alumno, todo lo
-     suyo, con la opción de quitar un apunte. */
+     suyo. En la derecha se puede quitar un apunte, elegir varios y
+     quitarlos de una vez, o reiniciar los puntos (del alumno o de toda
+     la clase). */
   var histAlumno = null;
+  var seleccion = null;   // null = sin elegir; {id: true} mientras se eligen apuntes
 
   function motivoHTML(x, cond) {
     var c = x.conducta_id && cond[x.conducta_id];
@@ -303,6 +306,7 @@ window.Puntos = (function () {
         '</section>' +
         '<aside class="dar-lateral">' +
           '<div class="dar-para" id="ptHistPara"></div>' +
+          '<div class="hist-barra" id="ptHistBarra"></div>' +
           '<div class="hist-lista" id="ptHistLista"></div>' +
         '</aside>' +
       '</div>';
@@ -312,10 +316,33 @@ window.Puntos = (function () {
       Sonido.click();
       var id = b.getAttribute('data-id');
       histAlumno = histAlumno === id ? null : id;
+      seleccion = null;
       pintarDetalle();
     };
-    $('ptHistTodos').onclick = function () { Sonido.click(); histAlumno = null; pintarDetalle(); };
+    $('ptHistTodos').onclick = function () { Sonido.click(); histAlumno = null; seleccion = null; pintarDetalle(); };
+    $('ptHistBarra').onclick = function (e) {
+      var b = e.target.closest('[data-acc]'); if (!b || b.disabled) return;
+      var acc = b.getAttribute('data-acc');
+      Sonido.click();
+      if (acc === 'elegir') { seleccion = {}; pintarDetalle(); }
+      else if (acc === 'cancelar') { seleccion = null; pintarDetalle(); }
+      else if (acc === 'todos') {
+        var ids = idsVisibles(), todos = ids.every(function (id) { return seleccion[id]; });
+        seleccion = {};
+        if (!todos) ids.forEach(function (id) { seleccion[id] = true; });
+        marcarSeleccion();
+      }
+      else if (acc === 'borrar') borrarSeleccion();
+      else if (acc === 'reiniciar') reiniciar();
+    };
     $('ptHistLista').onclick = function (e) {
+      if (seleccion) {
+        var item = e.target.closest('.hist-item[data-id]'); if (!item) return;
+        var id = item.getAttribute('data-id');
+        if (seleccion[id]) delete seleccion[id]; else seleccion[id] = true;
+        marcarSeleccion();
+        return;
+      }
       var b = e.target.closest('[data-borrar]'); if (!b) return;
       Dialogo.confirmar('¿Quitar estos puntos?', 'Se restan de su total y de su saldo.', 'Quitar').then(function (si) {
         if (si) Datos.borrarPunto(b.getAttribute('data-borrar')).then(pintarHistorial, function (er) { App.aviso(er.message, 'mal'); });
@@ -329,33 +356,117 @@ window.Puntos = (function () {
     });
   }
 
+  /* lo que se ve a la derecha: todo lo del alumno o lo último de la clase */
+  function apuntesVisibles() {
+    var todos = Datos.puntos.slice().sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; });
+    return histAlumno ? todos.filter(function (x) { return x.alumno_id === histAlumno; }) : todos.slice(0, 100);
+  }
+  function idsVisibles() { return apuntesVisibles().map(function (x) { return x.id; }); }
+
   function pintarDetalle() {
     if (!$('ptHistLista')) return;
     Array.prototype.forEach.call($('ptHistAl').children, function (b) { b.classList.toggle('elegido', b.getAttribute('data-id') === histAlumno); });
     var cond = {};
     Datos.conductas.forEach(function (c) { cond[c.id] = c; });
-    var todos = Datos.puntos.slice().sort(function (a, b) { return a.created_at < b.created_at ? 1 : -1; });
-    var lista, para;
+    var lista = apuntesVisibles(), para;
     if (histAlumno) {
       var a = Datos.alumnos.filter(function (x) { return x.id === histAlumno; })[0];
       var o = Datos.totales()[histAlumno];
-      lista = todos.filter(function (x) { return x.alumno_id === histAlumno; });
       para = '<div class="pila">' + Avatares.html(a.avatar, 'avatar-pila') + '</div><div class="dar-para-texto"><small>Historial de</small><b>' +
         App.esc(a.nombre_visible) + '</b></div><div class="hist-resumen"><b>⭐ ' + o.total + '</b><span>sem. ' + o.semana + ' · mes ' + o.mes +
         ' · trim. ' + o.trimestre + ' · saldo ' + o.saldo + '</span></div>';
     } else {
-      lista = todos.slice(0, 100);
       para = '<div class="dar-para-texto"><small>Toda la clase</small><b>Lo último que se ha dado</b></div>';
     }
     $('ptHistPara').innerHTML = para;
+    $('ptHistLista').classList.toggle('eligiendo', !!seleccion);
     $('ptHistLista').innerHTML = lista.length ? lista.map(function (x) {
-      return '<div class="hist-item">' +
+      return '<div class="hist-item" data-id="' + x.id + '">' +
         '<span class="hist-fecha">' + fechaCorta(x.fecha) + '</span>' +
         '<span class="hist-motivo">' + (histAlumno ? '' : '<b>' + App.esc(nombre(x.alumno_id)) + '</b>') + motivoHTML(x, cond) + '</span>' +
         '<span class="dar-pts' + (x.puntos < 0 ? ' menos' : '') + '">' + conPuntos(x.puntos) + '</span>' +
-        '<button class="mini peligro-suave" data-borrar="' + x.id + '" title="Quitar">🗑</button>' +
+        (seleccion
+          ? '<span class="hist-check" aria-hidden="true">✓</span>'
+          : '<button class="mini peligro-suave" data-borrar="' + x.id + '" title="Quitar">🗑</button>') +
       '</div>';
     }).join('') : '<div class="vacio">' + (histAlumno ? 'Aún no tiene puntos.' : 'Todavía no se han dado puntos.') + '</div>';
+    marcarSeleccion();
+  }
+
+  /* Botones de la derecha y apuntes marcados. Al marcar o desmarcar se
+     repinta solo esto, para no perder por dónde iba la lista. */
+  function marcarSeleccion() {
+    var barra = $('ptHistBarra'); if (!barra) return;
+    var hay = idsVisibles().length;
+    if (!seleccion) {
+      var algo = histAlumno
+        ? Datos.puntos.some(function (x) { return x.alumno_id === histAlumno; }) ||
+          Datos.canjes.some(function (c) { return c.alumno_id === histAlumno; })
+        : Datos.puntos.length > 0 || Datos.canjes.some(function (c) { return c.alumno_id; });
+      barra.innerHTML =
+        '<button class="chip-claro" data-acc="elegir"' + (hay ? '' : ' disabled') + '>☑ Elegir varios</button>' +
+        '<button class="chip-claro peligro" data-acc="reiniciar"' + (algo ? '' : ' disabled') + '>↺ ' +
+          (histAlumno ? 'Reiniciar sus puntos' : 'Reiniciar toda la clase') + '</button>';
+      return;
+    }
+    var n = Object.keys(seleccion).length;
+    barra.innerHTML =
+      '<button class="chip-claro" data-acc="todos">' + (n && n === hay ? 'Ninguno' : 'Todos') + '</button>' +
+      '<button class="chip-claro peligro" data-acc="borrar"' + (n ? '' : ' disabled') + '>🗑 Quitar' + (n ? ' ' + n : '') + '</button>' +
+      '<button class="chip-claro" data-acc="cancelar">Cancelar</button>';
+    Array.prototype.forEach.call($('ptHistLista').querySelectorAll('.hist-item[data-id]'), function (el) {
+      el.classList.toggle('marcado', !!seleccion[el.getAttribute('data-id')]);
+    });
+  }
+
+  function borrarSeleccion() {
+    var ids = Object.keys(seleccion);
+    if (!ids.length) return;
+    var suma = Datos.puntos.reduce(function (s, x) { return seleccion[x.id] ? s + x.puntos : s; }, 0);
+    Dialogo.confirmar('¿Quitar ' + ids.length + (ids.length === 1 ? ' apunte?' : ' apuntes?'),
+      'Suman ' + conPuntos(suma) + ' puntos. Se restan de los totales y de los saldos. No se puede deshacer.', 'Quitar', true)
+      .then(function (si) {
+        if (!si) return;
+        App.cargando(true, 'Quitando…');
+        return Datos.borrarPuntos(ids).then(function () {
+          App.cargando(false);
+          seleccion = null;
+          App.aviso(ids.length === 1 ? 'Apunte quitado' : ids.length + ' apuntes quitados');
+          pintarHistorial();
+        });
+      })
+      .catch(function (er) { App.cargando(false); App.aviso(er.message, 'mal'); });
+  }
+
+  /* Reiniciar: borra los apuntes y los canjes individuales (si no, el saldo
+     quedaría en negativo). Para toda la clase hay que escribir REINICIAR. */
+  function reiniciar() {
+    var alumno = histAlumno, pregunta;
+    if (alumno) {
+      var a = Datos.alumnos.filter(function (x) { return x.id === alumno; })[0];
+      pregunta = Dialogo.confirmar('¿Reiniciar los puntos de ' + a.nombre_visible + '?',
+        'Se borran todos sus apuntes y los premios que ha canjeado: su total y su saldo vuelven a 0. ' +
+        'El bote de la clase no cambia. No se puede deshacer.', 'Reiniciar', true);
+    } else {
+      pregunta = Dialogo.pedir({
+        titulo: '¿Reiniciar los puntos de toda la clase?',
+        texto: 'Se borran todos los apuntes de puntos individuales y los premios individuales canjeados de todo el alumnado: ' +
+               'los totales y los saldos vuelven a 0. El bote de la clase y sus premios colectivos no cambian. ' +
+               'No se puede deshacer; si quieres guardar una copia, antes usa Ajustes → Exportar los datos. ' +
+               'Para confirmar, escribe REINICIAR.',
+        campo: true, pista: 'REINICIAR', aceptar: 'Reiniciar', peligro: true,
+        comprobar: function (v) { return v.trim().toUpperCase() === 'REINICIAR' ? '' : 'Escribe REINICIAR para confirmar.'; }
+      }).then(function (v) { return v !== null; });
+    }
+    pregunta.then(function (si) {
+      if (!si) return;
+      App.cargando(true, 'Reiniciando…');
+      return Datos.reiniciarPuntos(alumno).then(function () {
+        App.cargando(false);
+        App.aviso(alumno ? 'Puntos reiniciados' : 'Puntos de la clase reiniciados');
+        pintarHistorial();
+      });
+    }).catch(function (er) { App.cargando(false); App.aviso(er.message, 'mal'); pintarHistorial(); });
   }
 
   /* ======================= CONDUCTAS ======================= */
@@ -412,8 +523,8 @@ window.Puntos = (function () {
         if (v.tipo !== 'mejorar' && v.puntos < 0) return 'Si resta puntos, el tipo es «A mejorar».';
         return '';
       },
-      borrar: c ? function () { return Datos.borrarDe('conductas', c.id).then(pintarConductas); } : null,
-      textoBorrar: 'Los puntos ya dados con ella se conservan (aparecerán sin conducta). Si solo quieres dejar de usarla, desactívala.',
+      borrar: c ? function () { return Datos.borrarConducta(c).then(pintarConductas); } : null,
+      textoBorrar: 'Los puntos ya dados con ella se conservan y en el historial siguen apareciendo con su nombre. Si solo quieres dejar de usarla, desactívala.',
       guardar: function (v) {
         var campos = { nombre: v.nombre, puntos: v.puntos, tipo: v.tipo, icono: v.icono, color: v.color };
         if (!c) campos.orden = Datos.conductas.reduce(function (m, x) { return Math.max(m, x.orden); }, 0) + 1;
